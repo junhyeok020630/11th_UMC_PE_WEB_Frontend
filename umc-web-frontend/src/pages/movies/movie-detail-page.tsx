@@ -1,30 +1,116 @@
 import { Link, useParams } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { getMovieDetail } from "../../api/movies/get-movie-detail";
+import type { TmdbMovieDetail } from "../../api/movies/models";
 import { BookmarkButton } from "../../components/bookmark-button";
-import { Footer } from "../../components/layout/footer";
-import { movies } from "../../data/movies";
+import { getMovieDetailErrorMessage } from "../../utils/movies/get-movie-detail-error-message";
+import {
+  getTmdbBackdropUrl,
+  getTmdbPosterUrl,
+} from "../../utils/movies/tmdb-image";
+
+function formatRuntime(runtime: number | null) {
+  if (runtime === null) {
+    return "상영 시간 정보가 없어요.";
+  }
+
+  const hours = Math.floor(runtime / 60);
+  const minutes = runtime % 60;
+
+  if (hours === 0) return `${minutes}분`;
+  if (minutes === 0) return `${hours}시간`;
+  return `${hours}시간 ${minutes}분`;
+}
 
 export function MovieDetailPage() {
   const { movieId } = useParams({ from: "/movies/$movieId" });
-  const movie = movies.find((item) => item.id === Number(movieId));
+  const parsedMovieId = Number(movieId);
+  const isValidMovieId = Number.isInteger(parsedMovieId) && parsedMovieId > 0;
+  const [movie, setMovie] = useState<TmdbMovieDetail | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  if (!movie) {
+  useEffect(() => {
+    let ignore = false;
+
+    setMovie(null);
+    setErrorMessage(null);
+
+    if (!Number.isInteger(parsedMovieId) || parsedMovieId <= 0) {
+      setIsLoading(false);
+      return;
+    }
+
+    setIsLoading(true);
+
+    getMovieDetail(parsedMovieId)
+      .then((response) => {
+        if (!ignore) setMovie(response);
+      })
+      .catch((error: unknown) => {
+        if (!ignore) setErrorMessage(getMovieDetailErrorMessage(error));
+      })
+      .finally(() => {
+        if (!ignore) setIsLoading(false);
+      });
+
+    return () => {
+      ignore = true;
+    };
+  }, [parsedMovieId]);
+
+  if (!isValidMovieId) {
     return (
       <main className="flex w-full flex-1 items-center justify-center px-20 py-24 text-lg font-bold text-[#606774]">
-        영화를 찾을 수 없어요.
+        올바르지 않은 영화 번호예요.
       </main>
     );
   }
 
+  if (isLoading) {
+    return (
+      <main className="flex w-full flex-1 items-center justify-center px-20 py-24 text-lg font-bold text-[#606774]">
+        영화 정보를 불러오는 중이에요.
+      </main>
+    );
+  }
+
+  if (errorMessage) {
+    return (
+      <main className="flex w-full flex-1 items-center justify-center px-20 py-24 text-lg font-bold text-[#606774]">
+        {errorMessage}
+      </main>
+    );
+  }
+
+  if (!movie) {
+    return (
+      <main className="flex w-full flex-1 items-center justify-center px-20 py-24 text-lg font-bold text-[#606774]">
+        영화 정보를 불러오지 못했어요.
+      </main>
+    );
+  }
+
+  const backdropUrl = getTmdbBackdropUrl(movie.backdrop_path);
+  const posterUrl = getTmdbPosterUrl(movie.poster_path);
+  const genreNames = movie.genres.map((genre) => genre.name).join(", ");
+  const runtime = formatRuntime(movie.runtime);
+
   return (
-    <>
-      <main className="w-full flex-1">
+    <main className="w-full flex-1">
         <section className="relative h-[360px] w-full overflow-hidden">
-          <img
-            className="absolute inset-0 size-full object-cover"
-            src={movie.backdropPath}
-            alt=""
-            aria-hidden="true"
-          />
+          {backdropUrl ? (
+            <img
+              className="absolute inset-0 size-full object-cover"
+              src={backdropUrl}
+              alt=""
+              aria-hidden="true"
+            />
+          ) : (
+            <div className="absolute inset-0 flex size-full items-center justify-center bg-[#e3e6eb] text-sm text-[#969da8]">
+              이미지 없음
+            </div>
+          )}
           <div className="absolute inset-0 flex h-full w-full flex-col justify-between px-20 py-6">
             <Link
               className="flex items-center gap-1 text-[13px] leading-normal font-bold text-white no-underline"
@@ -37,22 +123,30 @@ export function MovieDetailPage() {
               <h1 className="m-0 w-full text-[46px] leading-[49.68px] font-bold tracking-[-2.3px]">
                 {movie.title}
               </h1>
-              <p className="m-0 text-sm leading-normal">{movie.originalTitle}</p>
+              <p className="m-0 text-sm leading-normal">{movie.original_title}</p>
               <div className="flex w-full items-center gap-2 text-[13px] leading-normal font-bold">
-                <time dateTime={movie.releaseDate.replaceAll(".", "-")}>{movie.releaseDate}</time>
-                <span>{movie.genres.join(" · ")}</span>
-                <span>{movie.runtime}</span>
+                <time dateTime={movie.release_date}>
+                  {movie.release_date.replaceAll("-", ".")}
+                </time>
+                <span>{genreNames}</span>
+                <span>{runtime}</span>
               </div>
             </div>
           </div>
         </section>
 
         <section className="flex w-full items-start gap-8 px-20 py-6">
-          <img
-            className="h-[286px] w-[200px] shrink-0 rounded-[10px] object-cover shadow-[0_12px_30px_rgba(12,15,20,0.12)]"
-            src={movie.posterPath}
-            alt={`${movie.title} 포스터`}
-          />
+          {posterUrl ? (
+            <img
+              className="h-[286px] w-[200px] shrink-0 rounded-[10px] object-cover shadow-[0_12px_30px_rgba(12,15,20,0.12)]"
+              src={posterUrl}
+              alt={`${movie.title} 포스터`}
+            />
+          ) : (
+            <div className="flex h-[286px] w-[200px] shrink-0 items-center justify-center rounded-[10px] bg-[#e3e6eb] text-sm text-[#969da8] shadow-[0_12px_30px_rgba(12,15,20,0.12)]">
+              이미지 없음
+            </div>
+          )}
 
           <section className="flex min-w-0 flex-1 flex-col items-start gap-3">
             <h2 className="m-0 w-full text-[21px] leading-normal font-bold tracking-[-0.63px] text-[#17191e]">
@@ -98,8 +192,6 @@ export function MovieDetailPage() {
             </button>
           </aside>
         </section>
-      </main>
-      <Footer />
-    </>
+    </main>
   );
 }

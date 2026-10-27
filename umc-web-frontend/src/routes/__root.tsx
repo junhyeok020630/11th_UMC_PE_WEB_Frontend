@@ -1,4 +1,5 @@
 import { createRootRoute, Outlet } from "@tanstack/react-router";
+import { Footer } from "../components/layout/footer";
 import Header from "../components/layout/header";
 
 export const Route = createRootRoute({
@@ -6,6 +7,7 @@ export const Route = createRootRoute({
     <div className="relative flex min-h-screen min-w-[1024px] flex-col bg-[#f6f7f9] font-[Pretendard,'Pretendard_Variable',-apple-system,BlinkMacSystemFont,'Segoe_UI',sans-serif] text-[#17191e] antialiased">
       <Header />
       <Outlet />
+      <Footer />
     </div>
   ),
   notFoundComponent: () => (

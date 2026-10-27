@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { getMovieDetail } from "../../api/movies/get-movie-detail";
 import type { TmdbMovieDetail } from "../../api/movies/models";
 import { BookmarkButton } from "../../components/bookmark-button";
-import { Footer } from "../../components/layout/footer";
 import { getMovieDetailErrorMessage } from "../../utils/movies/get-movie-detail-error-message";
 import {
   getTmdbBackdropUrl,
@@ -98,8 +97,7 @@ export function MovieDetailPage() {
   const runtime = formatRuntime(movie.runtime);
 
   return (
-    <>
-      <main className="w-full flex-1">
+    <main className="w-full flex-1">
         <section className="relative h-[360px] w-full overflow-hidden">
           {backdropUrl ? (
             <img
@@ -194,8 +192,6 @@ export function MovieDetailPage() {
             </button>
           </aside>
         </section>
-      </main>
-      <Footer />
-    </>
+    </main>
   );
 }

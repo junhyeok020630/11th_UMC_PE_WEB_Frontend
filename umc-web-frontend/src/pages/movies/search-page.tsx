@@ -3,7 +3,6 @@ import { useEffect, useState, type SubmitEvent } from "react";
 import type { TmdbMovieListItem } from "../../api/movies/models";
 import { searchMovies } from "../../api/movies/search-movies";
 import { BookmarkButton } from "../../components/bookmark-button";
-import { Footer } from "../../components/layout/footer";
 import { getTmdbPosterUrl } from "../../utils/movies/tmdb-image";
 
 export function SearchPage() {
@@ -91,8 +90,7 @@ export function SearchPage() {
   }
 
   return (
-    <>
-      <main className="flex w-full flex-1 flex-col px-20 py-6">
+    <main className="flex w-full flex-1 flex-col px-20 py-6">
         <div className="flex w-full flex-col gap-[17px]">
           <h1 className="m-0 text-[38px] leading-[44px] font-bold tracking-[-1.71px] text-[#17191e]">
             영화 검색
@@ -192,8 +190,6 @@ export function SearchPage() {
             })}
           </ul>
         )}
-      </main>
-      <Footer />
-    </>
+    </main>
   );
 }

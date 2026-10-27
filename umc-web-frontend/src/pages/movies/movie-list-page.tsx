@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 
 import { getMovies } from '../../api/movies/get-movies'
 import type { TmdbMovieListItem } from '../../api/movies/models'
-import { Footer } from '../../components/layout/footer'
 import MovieGrid from '../../components/movies/movie-grid'
 import Pagination from '../../components/movies/pagination'
 
@@ -36,24 +35,20 @@ export function MovieListPage() {
   }, [])
 
   return (
-    <>
-      <main className="flex w-full flex-1 flex-col gap-5 px-20 py-6" id="movies">
-        <h1 className="m-0 text-[38px] leading-[44px] font-bold tracking-[-1.71px]">영화 목록</h1>
-        {isLoading ? (
-          <p>영화 목록을 불러오는 중이에요.</p>
-        ) : errorMessage ? (
-          <p>{errorMessage}</p>
-        ) : movies.length === 0 ? (
-          <p>조건에 맞는 영화가 없어요.</p>
-        ) : (
-          <>
-            <MovieGrid movies={movies} />
-            <Pagination currentPage={1} totalPages={5} />
-          </>
-        )}
-      </main>
-
-      <Footer />
-    </>
+    <main className="flex w-full flex-1 flex-col gap-5 px-20 py-6" id="movies">
+      <h1 className="m-0 text-[38px] leading-[44px] font-bold tracking-[-1.71px]">영화 목록</h1>
+      {isLoading ? (
+        <p>영화 목록을 불러오는 중이에요.</p>
+      ) : errorMessage ? (
+        <p>{errorMessage}</p>
+      ) : movies.length === 0 ? (
+        <p>조건에 맞는 영화가 없어요.</p>
+      ) : (
+        <>
+          <MovieGrid movies={movies} />
+          <Pagination currentPage={1} totalPages={5} />
+        </>
+      )}
+    </main>
   )
 }

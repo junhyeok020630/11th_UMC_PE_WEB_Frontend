@@ -44,12 +44,12 @@ function Header() {
         >
           <img className="size-6 opacity-60" src="/icons/search.svg" alt="" />
         </Link>
-        <button
-          className="flex h-[42px] cursor-pointer items-center justify-center rounded-lg border border-white bg-[#2563eb] px-4 text-sm leading-[17px] font-extrabold text-white"
-          type="button"
+        <Link
+          className="flex h-[42px] items-center justify-center rounded-lg border border-white bg-[#2563eb] px-4 text-sm leading-[17px] font-extrabold text-white no-underline"
+          to="/login"
         >
           로그인
-        </button>
+        </Link>
       </div>
     </header>
   )

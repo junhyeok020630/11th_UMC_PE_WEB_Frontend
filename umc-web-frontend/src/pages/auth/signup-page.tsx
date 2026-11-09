@@ -1,4 +1,5 @@
 import { useState, type SubmitEvent } from "react";
+import { Link } from "@tanstack/react-router";
 import { checkEmailDuplicate } from "@/api/members/check-email-duplicate";
 import { checkNicknameDuplicate } from "@/api/members/check-nickname-duplicate";
 import { signup } from "@/api/members/signup";
@@ -296,12 +297,12 @@ export function SignupPage() {
 
         <p className="m-0 w-full text-center text-xs leading-normal text-[#969da8]">
           이미 계정이 있나요?{" "}
-          <button
-            className="cursor-pointer border-0 bg-transparent p-0 text-xs leading-normal font-extrabold text-[#2563eb]"
-            type="button"
+          <Link
+            className="text-xs leading-normal font-extrabold text-[#2563eb] no-underline"
+            to="/login"
           >
             로그인
-          </button>
+          </Link>
         </p>
       </form>
     </main>

@@ -1,3 +1,5 @@
+import { Link } from "@tanstack/react-router";
+
 const PROFILE = {
   nickname: "gs0428",
   email: "gwangsoo@cinemalab.kr",
@@ -31,12 +33,12 @@ export function MyPage() {
         <h1 className="m-0 text-[31px] leading-[37px] font-bold tracking-[-1.24px] text-[#17191e]">
           내 정보
         </h1>
-        <button
-          className="flex h-[42px] cursor-pointer items-center justify-center rounded-lg border border-white bg-[#2563eb] px-4 text-sm leading-normal font-extrabold text-white"
-          type="button"
+        <Link
+          className="flex h-[42px] items-center justify-center rounded-lg border border-white bg-[#2563eb] px-4 text-sm leading-normal font-extrabold text-white no-underline"
+          to="/my-page/edit"
         >
           정보 수정
-        </button>
+        </Link>
       </div>
 
       <section className="flex w-full flex-col items-start gap-4 border-y border-[#e3e6eb] py-3">
@@ -130,3 +132,4 @@ export function MyPage() {
     </main>
   );
 }
+

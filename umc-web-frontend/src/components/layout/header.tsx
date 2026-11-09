@@ -30,9 +30,13 @@ function Header() {
           >
             검색
           </Link>
-          <a className="text-[#606774] no-underline" href="#my-page">
+          <Link
+            className="text-[#606774] no-underline"
+            to="/my-page"
+            activeProps={{ className: "text-[#17191e] underline" }}
+          >
             내 정보
-          </a>
+          </Link>
         </nav>
       </div>
 

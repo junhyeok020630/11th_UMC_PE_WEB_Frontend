@@ -30,9 +30,13 @@ function Header() {
           >
             검색
           </Link>
-          <a className="text-[#606774] no-underline" href="#my-page">
+          <Link
+            className="text-[#606774] no-underline"
+            to="/my-page"
+            activeProps={{ className: "text-[#17191e] underline" }}
+          >
             내 정보
-          </a>
+          </Link>
         </nav>
       </div>
 
@@ -44,12 +48,12 @@ function Header() {
         >
           <img className="size-6 opacity-60" src="/icons/search.svg" alt="" />
         </Link>
-        <button
-          className="flex h-[42px] cursor-pointer items-center justify-center rounded-lg border border-white bg-[#2563eb] px-4 text-sm leading-[17px] font-extrabold text-white"
-          type="button"
+        <Link
+          className="flex h-[42px] items-center justify-center rounded-lg border border-white bg-[#2563eb] px-4 text-sm leading-[17px] font-extrabold text-white no-underline"
+          to="/login"
         >
           로그인
-        </button>
+        </Link>
       </div>
     </header>
   )

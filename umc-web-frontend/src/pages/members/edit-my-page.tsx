@@ -1,23 +1,75 @@
+import { useQuery } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import { useState, type ChangeEvent, type SubmitEvent } from "react";
 import { checkEmailDuplicate } from "@/api/members/check-email-duplicate";
 import { checkNicknameDuplicate } from "@/api/members/check-nickname-duplicate";
+import { getMe, type MemberInfo } from "@/api/members/me";
+import { useUpdateMeMutation } from "@/hooks/use-update-me-mutation";
+import { useAuthStore } from "@/stores/auth-store";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-const DEFAULT_PROFILE_FORM = {
-  nickname: "gs0428",
-  email: "gwangsoo@cinemalab.kr",
-};
 
 const DEFAULT_DUPLICATE_CHECK = {
   isChecking: false,
   isAvailable: false,
 };
 
-type DuplicateCheckKey = keyof typeof DEFAULT_PROFILE_FORM;
+type DuplicateCheckKey = "email" | "nickname";
 
 export function EditMyPage() {
-  const [form, setForm] = useState(DEFAULT_PROFILE_FORM);
+  const accessToken = useAuthStore((state) => state.accessToken);
+  const meQuery = useQuery({
+    queryKey: ["members", "me"],
+    queryFn: getMe,
+    enabled: Boolean(accessToken),
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+  });
+
+  if (!accessToken) {
+    return (
+      <main className="flex w-full flex-1 flex-col items-center justify-center gap-4 px-20 py-24">
+        <p className="m-0 text-lg font-bold text-[#606774]">
+          로그인 후 내 정보를 수정할 수 있어요.
+        </p>
+        <Link
+          className="flex h-[42px] items-center justify-center rounded-lg bg-[#2563eb] px-4 text-sm font-extrabold text-white no-underline"
+          to="/login"
+        >
+          로그인
+        </Link>
+      </main>
+    );
+  }
+
+  if (meQuery.isPending) {
+    return (
+      <main className="flex w-full flex-1 items-center justify-center px-20 py-24 text-lg font-bold text-[#606774]">
+        내 정보를 불러오는 중이에요.
+      </main>
+    );
+  }
+
+  if (meQuery.isError) {
+    return (
+      <main className="flex w-full flex-1 items-center justify-center px-20 py-24 text-lg font-bold text-[#606774]">
+        내 정보를 불러오지 못했어요.
+      </main>
+    );
+  }
+
+  return <EditMyPageForm memberInfo={meQuery.data} />;
+}
+
+interface EditMyPageFormProps {
+  memberInfo: MemberInfo;
+}
+
+function EditMyPageForm({ memberInfo }: EditMyPageFormProps) {
+  const [form, setForm] = useState({
+    nickname: memberInfo.nickname,
+    email: memberInfo.email,
+  });
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [duplicateCheck, setDuplicateCheck] = useState({
     email: DEFAULT_DUPLICATE_CHECK,
@@ -27,6 +79,9 @@ export function EditMyPage() {
   const isEmailValid = EMAIL_REGEX.test(form.email.trim());
   const isNicknameValid =
     form.nickname.trim().length >= 2 && form.nickname.trim().length <= 12;
+  const updateMeMutation = useUpdateMeMutation();
+  const nickname = form.nickname.trim();
+  const canSubmit = nickname.length >= 2 && nickname.length <= 12;
 
   const handleChangeField = (key: DuplicateCheckKey, value: string) => {
     if (duplicateCheck[key].isChecking) return;
@@ -105,6 +160,9 @@ export function EditMyPage() {
 
   const handleSubmit = (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (!canSubmit || updateMeMutation.isPending) return;
+
+    updateMeMutation.mutate({ nickname });
   };
 
   return (
@@ -122,8 +180,9 @@ export function EditMyPage() {
           className="flex h-[42px] cursor-pointer items-center justify-center rounded-lg border border-white bg-[#2563eb] px-4 text-sm leading-normal font-extrabold text-white"
           type="submit"
           form="profile-form"
+          disabled={!canSubmit || updateMeMutation.isPending}
         >
-          변경사항 저장
+          {updateMeMutation.isPending ? "저장 중" : "변경사항 저장"}
         </button>
       </div>
 

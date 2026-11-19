@@ -1,9 +1,7 @@
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-
-const PROFILE = {
-  nickname: "gs0428",
-  email: "gwangsoo@cinemalab.kr",
-};
+import { getMe } from "@/api/members/me";
+import { useAuthStore } from "@/stores/auth-store";
 
 const FAVORITE_MOVIES = [
   {
@@ -27,6 +25,49 @@ const FAVORITE_MOVIES = [
 ];
 
 export function MyPage() {
+  const accessToken = useAuthStore((state) => state.accessToken);
+  const meQuery = useQuery({
+    queryKey: ["members", "me"],
+    queryFn: getMe,
+    enabled: Boolean(accessToken),
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+  });
+
+  if (!accessToken) {
+    return (
+      <main className="flex w-full flex-1 flex-col items-center justify-center gap-4 px-20 py-24">
+        <p className="m-0 text-lg font-bold text-[#606774]">
+          로그인 후 내 정보를 확인할 수 있어요.
+        </p>
+        <Link
+          className="flex h-[42px] items-center justify-center rounded-lg bg-[#2563eb] px-4 text-sm font-extrabold text-white no-underline"
+          to="/login"
+        >
+          로그인
+        </Link>
+      </main>
+    );
+  }
+
+  if (meQuery.isPending) {
+    return (
+      <main className="flex w-full flex-1 items-center justify-center px-20 py-24 text-lg font-bold text-[#606774]">
+        내 정보를 불러오는 중이에요.
+      </main>
+    );
+  }
+
+  if (meQuery.isError) {
+    return (
+      <main className="flex w-full flex-1 items-center justify-center px-20 py-24 text-lg font-bold text-[#606774]">
+        내 정보를 불러오지 못했어요.
+      </main>
+    );
+  }
+
+  const profile = meQuery.data;
+
   return (
     <main className="flex w-full flex-1 flex-col items-start gap-7 px-20 py-6">
       <div className="flex w-full items-center justify-between">
@@ -55,7 +96,7 @@ export function MyPage() {
                 닉네임
               </dt>
               <dd className="m-0 w-full text-sm leading-[17px] font-bold text-[#17191e]">
-                {PROFILE.nickname}
+                {profile.nickname}
               </dd>
             </div>
             <div className="flex min-w-0 flex-1 flex-col items-start gap-1.5">
@@ -63,7 +104,7 @@ export function MyPage() {
                 이메일
               </dt>
               <dd className="m-0 w-full text-sm leading-[17px] font-bold text-[#17191e]">
-                {PROFILE.email}
+                {profile.email}
               </dd>
             </div>
           </dl>

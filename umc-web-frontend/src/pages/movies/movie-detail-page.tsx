@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link, useParams } from "@tanstack/react-router";
 import { getMovieDetail } from "../../api/movies/get-movie-detail";
 import { BookmarkButton } from "../../components/bookmark-button";
+import { RatingEditor } from "../../components/ratings/rating-editor";
 import { getMovieDetailErrorMessage } from "../../utils/movies/get-movie-detail-error-message";
 import {
   getTmdbBackdropUrl,
@@ -125,40 +126,11 @@ export function MovieDetailPage() {
               movieId={movie.id}
               movieTitle={movie.title}
               variant="action"
+              statusSource="detail"
             />
           </section>
 
-          <aside className="flex w-[360px] shrink-0 flex-col items-start gap-2 border-l border-[#e3e6eb] pb-[41px] pl-[30px]">
-            <h2 className="m-0 w-full text-[21px] leading-normal font-bold tracking-[-0.63px] text-[#17191e]">
-              내 평점
-            </h2>
-            <p className="m-0 w-full text-xs leading-normal text-[#969da8]">
-              별점은 필수, 후기는 선택이에요.
-            </p>
-            <div className="flex w-full items-start gap-1" aria-label="영화 별점">
-              {[1, 2, 3, 4, 5].map((score) => (
-                <button
-                  className="flex size-[38px] cursor-pointer items-center justify-center rounded-lg border border-[#e3e6eb] bg-white p-0"
-                  type="button"
-                  aria-label={`${score}점`}
-                  key={score}
-                >
-                  <img className="size-6 opacity-60" src="/icons/star.svg" alt="" />
-                </button>
-              ))}
-            </div>
-            <textarea
-              className="h-[102px] w-full resize-none rounded-lg border border-[#e3e6eb] bg-white px-3 py-4 text-[13px] leading-[19.5px] text-[#17191e] outline-none placeholder:text-[#969da8]"
-              placeholder="영화를 보고 느낀 점을 남겨보세요."
-              aria-label="영화 후기"
-            />
-            <button
-              className="flex h-[42px] w-full cursor-pointer items-center justify-center rounded-lg border border-white bg-[#17191e] px-4 text-sm leading-normal font-extrabold text-white"
-              type="button"
-            >
-              평점 저장
-            </button>
-          </aside>
+          <RatingEditor movieId={movie.id} />
         </section>
     </main>
   );

@@ -126,6 +126,7 @@ export function MovieDetailPage() {
               movieId={movie.id}
               movieTitle={movie.title}
               variant="action"
+              statusSource="detail"
             />
           </section>
 

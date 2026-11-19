@@ -1,38 +1,64 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQueries, useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
+import { useState } from "react";
+import { favoriteQueryKeys } from "@/api/favorites/favorite-query-keys";
+import { getFavorites } from "@/api/favorites/get-favorites";
 import { getMe } from "@/api/members/me";
+import { getMovieDetail } from "@/api/movies/get-movie-detail";
+import Pagination from "@/components/movies/pagination";
 import { useAuthStore } from "@/stores/auth-store";
+import { getMemberIdFromAccessToken } from "@/utils/auth/get-member-id-from-access-token";
+import { getTmdbPosterUrl } from "@/utils/movies/tmdb-image";
 
-const FAVORITE_MOVIES = [
-  {
-    id: 1,
-    title: "스파이더맨: 브랜드 뉴 데이",
-    releaseDate: "2026.07.29",
-    posterPath: "/images/movies/spider-man-brand-new-day.jpg",
-  },
-  {
-    id: 2,
-    title: "오디세이",
-    releaseDate: "2026.08.05",
-    posterPath: "/images/movies/odyssey.jpg",
-  },
-  {
-    id: 5,
-    title: "미니언즈 & 몬스터즈",
-    releaseDate: "2026.07.15",
-    posterPath: "/images/movies/minions-monsters.jpg",
-  },
-];
+const FAVORITES_PER_PAGE = 5;
 
 export function MyPage() {
+  const [page, setPage] = useState(1);
   const accessToken = useAuthStore((state) => state.accessToken);
+  const memberId = getMemberIdFromAccessToken(accessToken);
+  const queryMemberId = memberId ?? 0;
+  const isAuthenticated = accessToken !== null && memberId !== null;
+
   const meQuery = useQuery({
     queryKey: ["members", "me"],
     queryFn: getMe,
-    enabled: Boolean(accessToken),
+    enabled: isAuthenticated,
     staleTime: 5 * 60 * 1000,
     retry: false,
   });
+  const favoritesQuery = useQuery({
+    queryKey: favoriteQueryKeys.list(queryMemberId),
+    queryFn: getFavorites,
+    enabled: isAuthenticated,
+    retry: false,
+  });
+
+  const favorites = favoritesQuery.data ?? [];
+  const totalPages = Math.max(
+    1,
+    Math.ceil(favorites.length / FAVORITES_PER_PAGE),
+  );
+  const currentPage = Math.min(page, totalPages);
+  const startIndex = (currentPage - 1) * FAVORITES_PER_PAGE;
+  const currentFavorites = favorites.slice(
+    startIndex,
+    startIndex + FAVORITES_PER_PAGE,
+  );
+  const favoriteMovieQueries = useQueries({
+    queries: currentFavorites.map((favorite) => ({
+      queryKey: ["movies", "detail", favorite.movieId],
+      queryFn: () => getMovieDetail(favorite.movieId),
+    })),
+  });
+  const favoriteMovies = favoriteMovieQueries.flatMap((query) =>
+    query.data ? [query.data] : [],
+  );
+  const isFavoriteMoviesPending = favoriteMovieQueries.some(
+    (query) => query.isPending,
+  );
+  const isFavoriteMoviesError = favoriteMovieQueries.some(
+    (query) => query.isError,
+  );
 
   if (!accessToken) {
     return (
@@ -46,6 +72,14 @@ export function MyPage() {
         >
           로그인
         </Link>
+      </main>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <main className="flex w-full flex-1 items-center justify-center px-20 py-24 text-lg font-bold text-[#606774]">
+        로그인 정보를 확인할 수 없어요. 다시 로그인해 주세요.
       </main>
     );
   }
@@ -116,61 +150,70 @@ export function MyPage() {
           내 즐겨찾기
         </h2>
 
-        <div className="grid h-[339px] w-full grid-cols-5 gap-x-[18px] gap-y-5">
-          {FAVORITE_MOVIES.map((movie) => (
-            <article
-              className="flex min-w-0 flex-col items-start gap-1 self-start"
-              key={movie.id}
-            >
-              <div className="h-[274px] w-full overflow-hidden rounded-[10px] bg-[#e3e6eb]">
-                <img
-                  className="block size-full object-cover"
-                  src={movie.posterPath}
-                  alt={`${movie.title} 포스터`}
-                />
-              </div>
-              <h3 className="m-0 w-full overflow-hidden pt-[5px] text-ellipsis whitespace-nowrap text-sm leading-[17px] font-extrabold text-[#17191e]">
-                {movie.title}
-              </h3>
-              <time
-                className="text-xs leading-[14px] font-normal text-[#969da8]"
-                dateTime={movie.releaseDate.replaceAll(".", "-")}
-              >
-                {movie.releaseDate}
-              </time>
-            </article>
-          ))}
-        </div>
+        {favoritesQuery.isPending || isFavoriteMoviesPending ? (
+          <p className="m-0 flex min-h-[339px] w-full items-center justify-center text-sm font-bold text-[#606774]">
+            즐겨찾기를 불러오는 중이에요.
+          </p>
+        ) : favoritesQuery.isError || isFavoriteMoviesError ? (
+          <p className="m-0 flex min-h-[339px] w-full items-center justify-center text-sm font-bold text-[#606774]">
+            즐겨찾기를 불러오지 못했어요.
+          </p>
+        ) : favorites.length === 0 ? (
+          <p className="m-0 flex min-h-[339px] w-full items-center justify-center text-sm font-bold text-[#606774]">
+            아직 즐겨찾기한 영화가 없어요.
+          </p>
+        ) : (
+          <>
+            <div className="grid min-h-[339px] w-full grid-cols-5 gap-x-[18px] gap-y-5">
+              {favoriteMovies.map((movie) => {
+                const posterUrl = getTmdbPosterUrl(movie.poster_path);
 
-        <nav
-          className="flex h-9 w-full items-center justify-center gap-3"
-          aria-label="내 즐겨찾기 페이지"
-        >
-          <button
-            className="flex size-6 cursor-default items-center justify-center border-0 bg-transparent p-0 opacity-10"
-            type="button"
-            aria-label="이전 페이지"
-            disabled
-          >
-            <img className="size-6" src="/icons/chevron-left.svg" alt="" />
-          </button>
-          <span
-            className="flex size-9 items-center justify-center rounded-[7px] bg-[#17191e] text-[13px] leading-4 font-bold text-white"
-            aria-current="page"
-          >
-            1
-          </span>
-          <button
-            className="flex size-6 cursor-default items-center justify-center border-0 bg-transparent p-0 opacity-10"
-            type="button"
-            aria-label="다음 페이지"
-            disabled
-          >
-            <img className="size-6" src="/icons/chevron-right.svg" alt="" />
-          </button>
-        </nav>
+                return (
+                  <article
+                    className="flex min-w-0 flex-col items-start gap-1 self-start"
+                    key={movie.id}
+                  >
+                    <Link
+                      className="h-[274px] w-full overflow-hidden rounded-[10px] bg-[#e3e6eb] no-underline"
+                      to="/movies/$movieId"
+                      params={{ movieId: String(movie.id) }}
+                    >
+                      {posterUrl ? (
+                        <img
+                          className="block size-full object-cover"
+                          src={posterUrl}
+                          alt={`${movie.title} 포스터`}
+                        />
+                      ) : (
+                        <span className="flex size-full items-center justify-center text-sm text-[#969da8]">
+                          이미지 없음
+                        </span>
+                      )}
+                    </Link>
+                    <h3 className="m-0 w-full overflow-hidden pt-[5px] text-ellipsis whitespace-nowrap text-sm leading-[17px] font-extrabold text-[#17191e]">
+                      {movie.title}
+                    </h3>
+                    <time
+                      className="text-xs leading-[14px] font-normal text-[#969da8]"
+                      dateTime={movie.release_date}
+                    >
+                      {movie.release_date
+                        ? movie.release_date.replaceAll("-", ".")
+                        : "개봉일 미정"}
+                    </time>
+                  </article>
+                );
+              })}
+            </div>
+
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setPage}
+            />
+          </>
+        )}
       </section>
     </main>
   );
 }
-

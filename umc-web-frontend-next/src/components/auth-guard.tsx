@@ -2,37 +2,35 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useSyncExternalStore, type ReactNode } from "react";
-import { hasStoredAccessToken } from "@/utils/auth-storage";
+import { useAuthStore } from "@/stores/auth-store";
 
 interface AuthGuardProps {
   children: ReactNode;
 }
 
-function subscribeToAuthStorage(onStoreChange: () => void) {
-  window.addEventListener("storage", onStoreChange);
-
-  return () => window.removeEventListener("storage", onStoreChange);
+function getAccessToken() {
+  return useAuthStore.getState().accessToken;
 }
 
-function getServerAuthSnapshot() {
-  return false;
+function getServerAccessToken() {
+  return null;
 }
 
 export function AuthGuard({ children }: AuthGuardProps) {
   const router = useRouter();
-  const isAuthenticated = useSyncExternalStore(
-    subscribeToAuthStorage,
-    hasStoredAccessToken,
-    getServerAuthSnapshot,
+  const accessToken = useSyncExternalStore(
+    useAuthStore.subscribe,
+    getAccessToken,
+    getServerAccessToken,
   );
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!accessToken) {
       router.replace("/login");
     }
-  }, [isAuthenticated, router]);
+  }, [accessToken, router]);
 
-  if (!isAuthenticated) return null;
+  if (!accessToken) return null;
 
   return children;
 }

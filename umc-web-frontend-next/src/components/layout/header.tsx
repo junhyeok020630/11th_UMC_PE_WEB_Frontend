@@ -2,10 +2,25 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSyncExternalStore } from "react";
+import { useAuthStore } from "@/stores/auth-store";
 import { cn } from "@/utils/cn";
+
+function getAccessToken() {
+  return useAuthStore.getState().accessToken;
+}
+
+function getServerAccessToken() {
+  return null;
+}
 
 function Header() {
   const pathname = usePathname() ?? "";
+  const accessToken = useSyncExternalStore(
+    useAuthStore.subscribe,
+    getAccessToken,
+    getServerAccessToken,
+  );
 
   return (
     <header className="flex h-[91px] w-full shrink-0 items-center justify-between border-b border-[#e3e6eb] bg-white px-20 py-6">
@@ -61,9 +76,9 @@ function Header() {
         </Link>
         <Link
           className="flex h-[42px] items-center justify-center rounded-lg border border-white bg-[#2563eb] px-4 text-sm leading-[17px] font-extrabold text-white no-underline"
-          href="/login"
+          href={accessToken ? "/my-page" : "/login"}
         >
-          로그인
+          {accessToken ? "마이페이지" : "로그인"}
         </Link>
       </div>
     </header>
